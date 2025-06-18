@@ -198,3 +198,5 @@ cython_debug/
 *.db
 *.key
 *.key.pub
+node_modules/
+.next/
