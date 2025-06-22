@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_4154bba6aec25d60dc6972ee95ac9d54 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_4154bba6aec25d60dc6972ee95ac9d54" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_4154bba6aec25d60dc6972ee95ac9d54 = L.map(
+                "map_4154bba6aec25d60dc6972ee95ac9d54",
+                {
+                    center: [33.63195, -84.2972],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 6,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_66c02d4e17f5df2f1c305b6ab622f529 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_66c02d4e17f5df2f1c305b6ab622f529.addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+            var poly_line_52d7245595f6269d04947f86cbd293fc = L.polyline(
+                [[33.6322, -84.1062], [33.6319, -84.2569], [33.6319, -84.3788], [33.6318, -84.4469]],
+                {"bubblingMouseEvents": true, "color": "purple", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "purple", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 2}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+        var popup_8120754a1631458b00d31bc9f2af4521 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_de3addab3547012ee6f67729fc717a14 = $(`<div id="html_de3addab3547012ee6f67729fc717a14" style="width: 100.0%; height: 100.0%;">Flight DAL1725 (acc1f3) - 4 data points</div>`)[0];
+                popup_8120754a1631458b00d31bc9f2af4521.setContent(html_de3addab3547012ee6f67729fc717a14);
+            
+        
+
+        poly_line_52d7245595f6269d04947f86cbd293fc.bindPopup(popup_8120754a1631458b00d31bc9f2af4521)
+        ;
+
+        
+    
+    
+            var marker_cef4200cdfea210fcf7fcb8c3feea345 = L.marker(
+                [33.6322, -84.1062],
+                {
+}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+            var icon_8e252f067f560321490075447d2053f1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b1a0d23b7e5a46c25764ae9bedeac0db = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7c68fce8e6444e25171e7f97f33dbf64 = $(`<div id="html_7c68fce8e6444e25171e7f97f33dbf64" style="width: 100.0%; height: 100.0%;">Departure: DAL1725<br>Time: 2025-06-21T18:35:32.497762+00:00<br>Altitude: 1600.2m</div>`)[0];
+                popup_b1a0d23b7e5a46c25764ae9bedeac0db.setContent(html_7c68fce8e6444e25171e7f97f33dbf64);
+            
+        
+
+        marker_cef4200cdfea210fcf7fcb8c3feea345.bindPopup(popup_b1a0d23b7e5a46c25764ae9bedeac0db)
+        ;
+
+        
+    
+    
+                marker_cef4200cdfea210fcf7fcb8c3feea345.setIcon(icon_8e252f067f560321490075447d2053f1);
+            
+    
+            var marker_3f7eef275c802222c4981e026db2670e = L.marker(
+                [33.6318, -84.4469],
+                {
+}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+            var icon_16e891628eb92592892e8d9f1a267779 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "stop",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_cec42a1270d6f9c1573dac2faf9941fa = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8e2bc67e7c4cb0cdd385cab5134317bc = $(`<div id="html_8e2bc67e7c4cb0cdd385cab5134317bc" style="width: 100.0%; height: 100.0%;">Arrival: DAL1725<br>Time: 2025-06-21T18:41:35.610297+00:00<br>Altitude: N/Am</div>`)[0];
+                popup_cec42a1270d6f9c1573dac2faf9941fa.setContent(html_8e2bc67e7c4cb0cdd385cab5134317bc);
+            
+        
+
+        marker_3f7eef275c802222c4981e026db2670e.bindPopup(popup_cec42a1270d6f9c1573dac2faf9941fa)
+        ;
+
+        
+    
+    
+                marker_3f7eef275c802222c4981e026db2670e.setIcon(icon_16e891628eb92592892e8d9f1a267779);
+            
+    
+            var circle_marker_a433131c678906e709f4463ca349ad8c = L.circleMarker(
+                [33.6322, -84.1062],
+                {"bubblingMouseEvents": true, "color": "purple", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "purple", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 0.7, "radius": 2, "stroke": true, "weight": 3}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+        var popup_13f97c5948cdb1d925add8486295eafd = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_07bf7361ae9af75bb4ea3119368073a4 = $(`<div id="html_07bf7361ae9af75bb4ea3119368073a4" style="width: 100.0%; height: 100.0%;">Point 1/4<br>Altitude: 1600m<br>Time: 2025-06-21T18:35:32.497762+00:00</div>`)[0];
+                popup_13f97c5948cdb1d925add8486295eafd.setContent(html_07bf7361ae9af75bb4ea3119368073a4);
+            
+        
+
+        circle_marker_a433131c678906e709f4463ca349ad8c.bindPopup(popup_13f97c5948cdb1d925add8486295eafd)
+        ;
+
+        
+    
+    
+            var circle_marker_43c616396c49f7d2565221bfd5d4f346 = L.circleMarker(
+                [33.6319, -84.2569],
+                {"bubblingMouseEvents": true, "color": "purple", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "purple", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 0.7, "radius": 2, "stroke": true, "weight": 3}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+        var popup_28b5e98bdaf9aa92463293de426a4eb4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_acbfefee2f152496de9edf53bc967bd4 = $(`<div id="html_acbfefee2f152496de9edf53bc967bd4" style="width: 100.0%; height: 100.0%;">Point 2/4<br>Altitude: 1006m<br>Time: 2025-06-21T18:37:33.526505+00:00</div>`)[0];
+                popup_28b5e98bdaf9aa92463293de426a4eb4.setContent(html_acbfefee2f152496de9edf53bc967bd4);
+            
+        
+
+        circle_marker_43c616396c49f7d2565221bfd5d4f346.bindPopup(popup_28b5e98bdaf9aa92463293de426a4eb4)
+        ;
+
+        
+    
+    
+            var circle_marker_d2c67ab6f62d553ae6464676aa6f8383 = L.circleMarker(
+                [33.6319, -84.3788],
+                {"bubblingMouseEvents": true, "color": "purple", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "purple", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 0.7, "radius": 2, "stroke": true, "weight": 3}
+            ).addTo(map_4154bba6aec25d60dc6972ee95ac9d54);
+        
+    
+        var popup_03f9bf96cbd01a8ad554e3b9eb2b039b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_48b4b3f1d29abc2a239a1a70fd1f5509 = $(`<div id="html_48b4b3f1d29abc2a239a1a70fd1f5509" style="width: 100.0%; height: 100.0%;">Point 3/4<br>Altitude: 434m<br>Time: 2025-06-21T18:39:34.576713+00:00</div>`)[0];
+                popup_03f9bf96cbd01a8ad554e3b9eb2b039b.setContent(html_48b4b3f1d29abc2a239a1a70fd1f5509);
+            
+        
+
+        circle_marker_d2c67ab6f62d553ae6464676aa6f8383.bindPopup(popup_03f9bf96cbd01a8ad554e3b9eb2b039b)
+        ;
+
+        
+    
+</script>
+</html>
