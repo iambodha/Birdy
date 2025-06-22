@@ -513,5 +513,5 @@ def create_most_datapoints_flight_map(db_path="birdy_flights.db"):
 #print_icao24_stats()
 #print_ground_to_flight_journey()
 #create_longest_flight_map()
-#create_random_flight_map()
-create_most_datapoints_flight_map()
+create_random_flight_map()
+#create_most_datapoints_flight_map()

@@ -21,21 +21,35 @@ interface AircraftMetadata {
   updated_at: string;
 }
 
-interface FlightHistory {
+interface FlightJourney {
   id: number;
   icao24: string;
   callsign: string | null;
   origin_country: string | null;
-  longitude: number | null;
-  latitude: number | null;
-  baro_altitude: number | null;
-  on_ground: boolean | null;
-  velocity: number | null;
-  true_track: number | null;
-  vertical_rate: number | null;
   collection_time: string;
-  time_position: number | null;
-  last_contact: number | null;
+  flight_date: string;
+  departure_time: string;
+  arrival_time: string;
+  duration_minutes: number | null;
+  start_status: string | null;
+  end_status: string | null;
+  flight_status: string | null;
+  max_altitude: number | null;
+  max_velocity: number | null;
+  position_count: number | null;
+  positions: Position[];
+}
+
+interface Position {
+  timestamp: string;
+  lon: number;
+  lat: number;
+  alt_baro?: number;
+  alt_geo?: number;
+  velocity?: number;
+  track?: number;
+  vert_rate?: number;
+  on_ground?: boolean;
 }
 
 interface Stats {
@@ -69,9 +83,9 @@ export default function Home() {
     totalPages: 0
   });
   
-  // New state for flight history modal
+  // Updated state for flight history modal
   const [selectedAircraft, setSelectedAircraft] = useState<AircraftMetadata | null>(null);
-  const [flightHistory, setFlightHistory] = useState<FlightHistory[]>([]);
+  const [flightHistory, setFlightHistory] = useState<FlightJourney[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
@@ -169,6 +183,18 @@ export default function Home() {
   const formatCoordinates = (lat: number | null, lon: number | null) => {
     if (lat === null || lon === null) return 'N/A';
     return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  };
+
+  const formatDuration = (minutes: number | null) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const formatFlightStatus = (status: string | null) => {
+    if (!status) return 'Unknown';
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   return (
@@ -386,7 +412,7 @@ export default function Home() {
       {/* Flight History Modal */}
       {showHistoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Flight History</h2>
@@ -408,79 +434,123 @@ export default function Home() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : flightHistory.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="mb-4">
                     <p className="text-sm text-gray-600">
-                      Found {flightHistory.length} flight records
+                      Found {flightHistory.length} flight journeys
                     </p>
                   </div>
                   
                   {flightHistory.map((flight, index) => (
-                    <div key={flight.id} className="bg-gray-50 rounded-lg p-4 border">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium text-gray-900">
-                            {formatDateTime(flight.collection_time)}
+                    <div key={flight.id} className="bg-gray-50 rounded-lg p-6 border">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <Plane className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {flight.callsign || 'Unknown Flight'}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {formatDate(flight.flight_date)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-3 py-1 text-sm rounded-full ${
+                            flight.flight_status === 'completed' ? 'bg-green-100 text-green-700' :
+                            flight.flight_status === 'active' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {formatFlightStatus(flight.flight_status)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {flight.on_ground ? (
-                            <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
-                              On Ground
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                              In Flight
-                            </span>
+                      </div>
+
+                      {/* Flight Summary */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="bg-white p-3 rounded border">
+                          <div className="flex items-center gap-2 text-gray-500 mb-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm">Duration</span>
+                          </div>
+                          <p className="font-semibold">{formatDuration(flight.duration_minutes)}</p>
+                        </div>
+                        
+                        <div className="bg-white p-3 rounded border">
+                          <div className="flex items-center gap-2 text-gray-500 mb-1">
+                            <ArrowUp className="h-4 w-4" />
+                            <span className="text-sm">Max Altitude</span>
+                          </div>
+                          <p className="font-semibold">{formatAltitude(flight.max_altitude)}</p>
+                        </div>
+                        
+                        <div className="bg-white p-3 rounded border">
+                          <div className="flex items-center gap-2 text-gray-500 mb-1">
+                            <Gauge className="h-4 w-4" />
+                            <span className="text-sm">Max Velocity</span>
+                          </div>
+                          <p className="font-semibold">{formatVelocity(flight.max_velocity)}</p>
+                        </div>
+                      </div>
+
+                      {/* Flight Times */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Departure</div>
+                          <p className="font-medium">{formatDateTime(flight.departure_time)}</p>
+                          {flight.start_status && (
+                            <p className="text-xs text-gray-400">Status: {flight.start_status}</p>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Arrival</div>
+                          <p className="font-medium">{formatDateTime(flight.arrival_time)}</p>
+                          {flight.end_status && (
+                            <p className="text-xs text-gray-400">Status: {flight.end_status}</p>
                           )}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <div className="flex items-center gap-1 text-gray-500 mb-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>Position</span>
-                          </div>
-                          <p className="font-medium">{formatCoordinates(flight.latitude, flight.longitude)}</p>
+                      {/* Position Count */}
+                      {flight.position_count && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                          <MapPin className="h-4 w-4" />
+                          <span>{flight.position_count} position reports recorded</span>
                         </div>
-                        
-                        <div>
-                          <div className="flex items-center gap-1 text-gray-500 mb-1">
-                            <ArrowUp className="h-3 w-3" />
-                            <span>Altitude</span>
-                          </div>
-                          <p className="font-medium">{formatAltitude(flight.baro_altitude)}</p>
-                        </div>
-                        
-                        <div>
-                          <div className="flex items-center gap-1 text-gray-500 mb-1">
-                            <Gauge className="h-3 w-3" />
-                            <span>Velocity</span>
-                          </div>
-                          <p className="font-medium">{formatVelocity(flight.velocity)}</p>
-                        </div>
-                        
-                        <div>
-                          <div className="flex items-center gap-1 text-gray-500 mb-1">
-                            <span>Callsign</span>
-                          </div>
-                          <p className="font-medium">{flight.callsign || 'N/A'}</p>
-                        </div>
-                      </div>
+                      )}
 
-                      {flight.vertical_rate !== null && (
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <div className="flex items-center gap-2 text-sm">
-                            {flight.vertical_rate > 0 ? (
-                              <ArrowUp className="h-3 w-3 text-green-500" />
-                            ) : flight.vertical_rate < 0 ? (
-                              <ArrowDown className="h-3 w-3 text-red-500" />
-                            ) : null}
-                            <span className="text-gray-500">
-                              Vertical Rate: {flight.vertical_rate ? `${Math.round(flight.vertical_rate)} ft/min` : 'N/A'}
+                      {/* Country Info */}
+                      {flight.origin_country && (
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Origin Country:</span> {flight.origin_country}
+                        </div>
+                      )}
+
+                      {/* Position Data Preview */}
+                      {flight.positions && flight.positions.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              Position Data ({flight.positions.length} points)
                             </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-gray-500">First Position:</span>
+                              <div className="font-mono">
+                                {formatCoordinates(flight.positions[0].lat, flight.positions[0].lon)}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Last Position:</span>
+                              <div className="font-mono">
+                                {formatCoordinates(
+                                  flight.positions[flight.positions.length - 1].lat,
+                                  flight.positions[flight.positions.length - 1].lon
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}

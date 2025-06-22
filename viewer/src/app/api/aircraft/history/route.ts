@@ -2,21 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 
-interface FlightHistory {
+interface FlightJourney {
   id: number;
   icao24: string;
   callsign: string | null;
   origin_country: string | null;
-  longitude: number | null;
-  latitude: number | null;
-  baro_altitude: number | null;
-  on_ground: boolean | null;
-  velocity: number | null;
-  true_track: number | null;
-  vertical_rate: number | null;
   collection_time: string;
-  time_position: number | null;
-  last_contact: number | null;
+  flight_date: string;
+  departure_time: string;
+  arrival_time: string;
+  duration_minutes: number | null;
+  start_status: string | null;
+  end_status: string | null;
+  flight_status: string | null;
+  max_altitude: number | null;
+  max_velocity: number | null;
+  position_count: number | null;
+  positions: string | null; // JSON string of position array
+}
+
+interface Position {
+  timestamp: string;
+  lon: number;
+  lat: number;
+  alt_baro?: number;
+  alt_geo?: number;
+  velocity?: number;
+  track?: number;
+  vert_rate?: number;
+  on_ground?: boolean;
 }
 
 export async function GET(request: NextRequest) {
@@ -45,15 +59,16 @@ export async function GET(request: NextRequest) {
 
         const query = `
           SELECT 
-            id, icao24, callsign, origin_country, longitude, latitude,
-            baro_altitude, on_ground, velocity, true_track, vertical_rate,
-            collection_time, time_position, last_contact
+            id, icao24, callsign, origin_country, collection_time,
+            flight_date, departure_time, arrival_time, duration_minutes,
+            start_status, end_status, flight_status, max_altitude, max_velocity,
+            position_count, positions
           FROM flights 
           WHERE icao24 = ?
-          ORDER BY collection_time ASC
+          ORDER BY departure_time DESC
         `;
 
-        db.all(query, [icao24], (err, flights: FlightHistory[]) => {
+        db.all(query, [icao24], (err, flights: FlightJourney[]) => {
           db.close();
           
           if (err) {
@@ -65,8 +80,14 @@ export async function GET(request: NextRequest) {
             return;
           }
 
+          // Parse positions JSON for each flight
+          const flightsWithParsedPositions = flights.map(flight => ({
+            ...flight,
+            positions: flight.positions ? JSON.parse(flight.positions) as Position[] : []
+          }));
+
           resolve(NextResponse.json({
-            flights,
+            flights: flightsWithParsedPositions,
             total: flights.length
           }));
         });
