@@ -58,6 +58,22 @@ def create_database(db_path="birdy_flights.db"):
         )
     ''')
     
+    # Create active_tracking table (REQUIRED by FlightTracker)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS active_tracking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            icao24 TEXT NOT NULL,
+            callsign TEXT,
+            origin_country TEXT,
+            tracking_start_time TEXT NOT NULL,
+            last_update_time TEXT NOT NULL,
+            flight_status TEXT NOT NULL,  -- 'ground', 'takeoff', 'airborne', 'landing'
+            takeoff_time TEXT,
+            positions TEXT,  -- JSON array of position data
+            UNIQUE(icao24)
+        )
+    ''')
+    
     # Create raw_positions table for temporary storage during processing
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS raw_positions (
@@ -144,6 +160,11 @@ def create_database(db_path="birdy_flights.db"):
     cursor.execute('''CREATE INDEX IF NOT EXISTS idx_raw_positions_time ON raw_positions(collection_time)''')
     cursor.execute('''CREATE INDEX IF NOT EXISTS idx_raw_positions_processed ON raw_positions(processed)''')
     
+    # Indexes for active_tracking table
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_active_tracking_icao24 ON active_tracking(icao24)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_active_tracking_status ON active_tracking(flight_status)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_active_tracking_update_time ON active_tracking(last_update_time)''')
+    
     # Create a view for joined flight and aircraft data
     cursor.execute('''
         CREATE VIEW IF NOT EXISTS flights_with_metadata AS
@@ -195,6 +216,7 @@ def create_database(db_path="birdy_flights.db"):
     
     print(f"Database '{db_path}' created successfully with the following tables:")
     print("  - flights: Stores real-time flight data")
+    print("  - active_tracking: Stores ongoing flight tracking sessions")
     print("  - aircraft_metadata: Stores aircraft information")
     print("  - flights_with_metadata: View joining both tables")
     print("  - raw_positions: Temporary storage for individual position reports")
@@ -350,9 +372,17 @@ def get_database_info(db_path="birdy_flights.db"):
     cursor.execute("SELECT COUNT(*) FROM aircraft_metadata")
     metadata_count = cursor.fetchone()[0]
     
+    # Check if active_tracking table exists and get count
+    try:
+        cursor.execute("SELECT COUNT(*) FROM active_tracking")
+        active_tracking_count = cursor.fetchone()[0]
+    except sqlite3.OperationalError:
+        active_tracking_count = 0
+    
     print(f"Database: {db_path}")
     print(f"  Flights records: {flights_count:,}")
     print(f"  Aircraft metadata records: {metadata_count:,}")
+    print(f"  Active tracking sessions: {active_tracking_count:,}")
     
     # Get latest collection time
     cursor.execute("SELECT collection_time FROM flights ORDER BY collection_time DESC LIMIT 1")
