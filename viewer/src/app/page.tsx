@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plane, Users, Building, Calendar, ChevronLeft, ChevronRight, History, X, MapPin, Clock, Gauge, ArrowUp, ArrowDown } from 'lucide-react';
+import Link from 'next/link';
 
 interface AircraftMetadata {
   id: number;
@@ -203,9 +204,21 @@ export default function Home() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Plane className="h-8 w-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Birdy Aircraft Viewer</h1>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Plane className="h-8 w-8 text-blue-600" />
+                <h1 className="text-3xl font-bold text-gray-900">Birdy Aircraft Viewer</h1>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/map"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Live Map
+                </Link>
+              </div>
             </div>
 
             {/* Stats Cards */}
