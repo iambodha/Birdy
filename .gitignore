@@ -193,8 +193,10 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Specific files to ignore (instead of *.json which would ignore package.json)
 *.csv
-*.json
+credentials.json
+aircraft_metadata_cache.json
 *.db
 *.key
 *.key.pub
