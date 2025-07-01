@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Required for static export
-export const dynamic = 'force-dynamic';
-
 interface FlightJourney {
   id: number;
   icao24: string;

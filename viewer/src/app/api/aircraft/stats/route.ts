@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Required for static export
-export const dynamic = 'force-dynamic';
-
 // Mock data for aircraft statistics
 const mockStats = {
   totalAircraft: 15847,
