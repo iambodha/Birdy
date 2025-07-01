@@ -34,21 +34,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Debug directory contents
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
       - name: Detect package manager
         id: detect-package-manager
         run: |
+          echo "Checking for package manager files..."
           if [ -f "yarn.lock" ]; then
+            echo "Found yarn.lock"
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "package.json" ]; then
+          elif [ -f "package-lock.json" ]; then
+            echo "Found package-lock.json"
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
+          elif [ -f "package.json" ]; then
+            echo "Found package.json (no lock file)"
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            exit 0
           else
             echo "Unable to determine package manager"
+            echo "Files in directory:"
+            ls -la
             exit 1
           fi
       - name: Setup Node
