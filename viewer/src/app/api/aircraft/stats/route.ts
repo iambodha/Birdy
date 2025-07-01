@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Required for static export
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 // Mock data for aircraft statistics
 const mockStats = {
   totalAircraft: 15847,

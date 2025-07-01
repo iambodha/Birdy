@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Required for static export
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 interface AircraftState {
   icao24: string;
   callsign: string | null;
