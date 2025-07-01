@@ -194,7 +194,6 @@ cython_debug/
 .cursorindexingignore
 
 *.csv
-*.json
 *.db
 *.key
 *.key.pub
