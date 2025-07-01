@@ -28,22 +28,20 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./viewer
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
       - name: Detect package manager
         id: detect-package-manager
+        working-directory: ./viewer
         run: |
-          if [ -f "${{ github.workspace }}/viewer/yarn.lock" ]; then
+          if [ -f "yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "${{ github.workspace }}/viewer/package.json" ]; then
+          elif [ -f "package.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
@@ -62,12 +60,6 @@ jobs:
       
       - name: Setup Pages
         uses: actions/configure-pages@v5
-        with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
-          #
-          # You may remove this line if you want to manage the configuration yourself.
-          static_site_generator: next
       
       - name: Restore cache
         uses: actions/cache@v4
@@ -81,9 +73,11 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('./viewer/package-lock.json', './viewer/yarn.lock') }}-
       
       - name: Install dependencies
+        working-directory: ./viewer
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       
       - name: Build with Next.js
+        working-directory: ./viewer
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
         env:
           NODE_ENV: production

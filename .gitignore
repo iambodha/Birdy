@@ -202,3 +202,4 @@ aircraft_metadata_cache.json
 *.key.pub
 node_modules/
 .next/
+out/
