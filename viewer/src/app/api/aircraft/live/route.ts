@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 interface AircraftState {
   icao24: string;
@@ -19,240 +17,123 @@ interface AircraftState {
   squawk: string | null;
 }
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-  source: string;
-}
-
-// In-memory cache with rate limiting
-const cache = new Map<string, CacheEntry>();
-const CACHE_DURATION = 2 * 60 * 1000; // 2 minute cache for better API usage
-const RATE_LIMIT_DURATION = 10 * 60 * 1000; // 10 minutes between requests after rate limit
-let lastRateLimitTime = 0;
-let lastSuccessfulRequest = 0;
-const MIN_REQUEST_INTERVAL = 60 * 1000; // Minimum 60 seconds between requests
-
-// Mock data generator for development/fallback
+// Enhanced mock data generator for more realistic aircraft distribution
 function generateMockAircraftData(): AircraftState[] {
   const mockAircraft: AircraftState[] = [];
-  const countries = ['United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Japan', 'Netherlands'];
-  const airlines = ['AAL', 'UAL', 'DAL', 'SWA', 'BAW', 'DLH', 'AFR', 'KLM'];
+  const countries = [
+    'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 
+    'Japan', 'Netherlands', 'Switzerland', 'Sweden', 'Norway', 'Spain', 'Italy',
+    'Brazil', 'Mexico', 'India', 'China', 'South Korea', 'Singapore', 'UAE'
+  ];
+  const airlines = [
+    'AAL', 'UAL', 'DAL', 'SWA', 'BAW', 'DLH', 'AFR', 'KLM', 'EZY', 'RYR',
+    'LUV', 'JBU', 'VIR', 'EIN', 'SAS', 'FIN', 'THY', 'QTR', 'EK', 'SIA',
+    'JAL', 'ANA', 'CPA', 'EVA', 'TAM', 'GOL', 'AMX', 'ACA', 'WJA'
+  ];
   
-  for (let i = 0; i < 50; i++) {
-    const isAirborne = Math.random() > 0.3;
-    const lat = (Math.random() - 0.5) * 160; // -80 to 80
-    const lon = (Math.random() - 0.5) * 360; // -180 to 180
+  // Generate more aircraft for a realistic demo
+  const numAircraft = Math.floor(Math.random() * 300) + 200; // 200-500 aircraft
+  
+  for (let i = 0; i < numAircraft; i++) {
+    const isAirborne = Math.random() > 0.25; // 75% airborne, 25% on ground
+    
+    // More realistic geographic distribution
+    let lat, lon;
+    if (Math.random() > 0.3) {
+      // 70% concentrated around major flight corridors
+      const corridors = [
+        { lat: 40, lon: -75 }, // US East Coast
+        { lat: 34, lon: -118 }, // US West Coast
+        { lat: 51, lon: 0 }, // UK/Europe
+        { lat: 49, lon: 2 }, // France/Central Europe
+        { lat: 52, lon: 5 }, // Netherlands/Northern Europe
+        { lat: 35, lon: 139 }, // Japan
+        { lat: 1, lon: 103 }, // Singapore
+        { lat: 25, lon: 55 }, // UAE
+        { lat: -33, lon: 151 }, // Australia East
+        { lat: 45, lon: -73 }, // Canada East
+      ];
+      
+      const corridor = corridors[Math.floor(Math.random() * corridors.length)];
+      lat = corridor.lat + (Math.random() - 0.5) * 20; // ±10 degrees
+      lon = corridor.lon + (Math.random() - 0.5) * 30; // ±15 degrees
+    } else {
+      // 30% scattered globally
+      lat = (Math.random() - 0.5) * 160; // -80 to 80
+      lon = (Math.random() - 0.5) * 360; // -180 to 180
+    }
+    
+    // Ensure coordinates are within valid bounds
+    lat = Math.max(-85, Math.min(85, lat));
+    lon = Math.max(-180, Math.min(180, lon));
+    
+    const altitude = isAirborne ? 
+      Math.floor(Math.random() * 35000) + 5000 : // 5,000-40,000 ft for airborne
+      Math.floor(Math.random() * 100); // 0-100 ft for ground
+    
+    const velocity = isAirborne ?
+      Math.floor(Math.random() * 400) + 200 : // 200-600 kt for airborne
+      Math.floor(Math.random() * 50); // 0-50 kt for ground
+    
+    const verticalRate = isAirborne ?
+      (Math.random() - 0.5) * 4000 : // ±2000 ft/min for airborne
+      0; // 0 for ground
     
     mockAircraft.push({
-      icao24: Math.random().toString(16).substr(2, 6),
-      callsign: Math.random() > 0.2 ? airlines[Math.floor(Math.random() * airlines.length)] + Math.floor(Math.random() * 9999) : null,
+      icao24: Math.random().toString(16).substr(2, 6).toLowerCase(),
+      callsign: Math.random() > 0.15 ? 
+        airlines[Math.floor(Math.random() * airlines.length)] + Math.floor(Math.random() * 9999).toString().padStart(4, '0') : 
+        null,
       origin_country: countries[Math.floor(Math.random() * countries.length)],
       time_position: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 60),
-      last_contact: Math.floor(Date.now() / 1000),
-      longitude: lon,
-      latitude: lat,
-      baro_altitude: isAirborne ? Math.floor(Math.random() * 40000) + 5000 : null,
+      last_contact: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 30),
+      longitude: parseFloat(lon.toFixed(4)),
+      latitude: parseFloat(lat.toFixed(4)),
+      baro_altitude: altitude,
       on_ground: !isAirborne,
-      velocity: isAirborne ? Math.floor(Math.random() * 500) + 200 : Math.floor(Math.random() * 50),
+      velocity: velocity,
       true_track: Math.floor(Math.random() * 360),
-      vertical_rate: isAirborne ? (Math.random() - 0.5) * 3000 : 0,
-      geo_altitude: isAirborne ? Math.floor(Math.random() * 40000) + 5000 : null,
-      squawk: Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+      vertical_rate: Math.round(verticalRate),
+      geo_altitude: altitude + Math.floor(Math.random() * 200) - 100, // Slight variation from baro
+      squawk: Math.random() > 0.3 ? 
+        Math.floor(Math.random() * 10000).toString().padStart(4, '0') : 
+        null
     });
   }
   
   return mockAircraft;
 }
 
-async function fetchFromFlightAware(apiKey: string): Promise<AircraftState[]> {
-  const response = await fetch('https://aeroapi.flightaware.com/aeroapi/flights/search', {
-    method: 'GET',
-    headers: {
-      'x-apikey': apiKey,
-      'Accept': 'application/json'
-    },
-    cache: 'no-store'
-  });
+// Cache for consistent data across requests
+let cachedData: {
+  aircraft: AircraftState[];
+  timestamp: number;
+  stats: any;
+} | null = null;
 
-  if (!response.ok) {
-    throw new Error(`FlightAware API error: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  const flights = data.flights || [];
-
-  // Transform FlightAware data to our format
-  return flights.map((flight: any) => ({
-    icao24: flight.ident_icao || flight.ident || Math.random().toString(16).substr(2, 6),
-    callsign: flight.ident,
-    origin_country: flight.origin?.country_code || 'Unknown',
-    time_position: Math.floor(Date.now() / 1000),
-    last_contact: Math.floor(Date.now() / 1000),
-    longitude: flight.last_position?.longitude || null,
-    latitude: flight.last_position?.latitude || null,
-    baro_altitude: flight.last_position?.altitude || null,
-    on_ground: flight.status === 'Scheduled' || flight.status === 'Departed',
-    velocity: flight.last_position?.groundspeed || null,
-    true_track: flight.last_position?.heading || null,
-    vertical_rate: null,
-    geo_altitude: flight.last_position?.altitude || null,
-    squawk: null
-  })).filter((aircraft: AircraftState) => aircraft.longitude !== null && aircraft.latitude !== null);
-}
-
-async function fetchFromAviationEdge(apiKey: string): Promise<AircraftState[]> {
-  const response = await fetch(`https://aviation-edge.com/v2/public/flights?key=${apiKey}&limit=100`, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json'
-    },
-    cache: 'no-store'
-  });
-
-  if (!response.ok) {
-    throw new Error(`Aviation Edge API error: ${response.status} ${response.statusText}`);
-  }
-
-  const flights = await response.json();
-
-  // Transform Aviation Edge data to our format
-  return flights.map((flight: any) => ({
-    icao24: flight.aircraft?.icaoCode || flight.flight?.icaoNumber || Math.random().toString(16).substr(2, 6),
-    callsign: flight.flight?.iataNumber || flight.flight?.icaoNumber,
-    origin_country: flight.departure?.country || 'Unknown',
-    time_position: Math.floor(Date.now() / 1000),
-    last_contact: Math.floor(Date.now() / 1000),
-    longitude: parseFloat(flight.geography?.longitude) || null,
-    latitude: parseFloat(flight.geography?.latitude) || null,
-    baro_altitude: parseInt(flight.geography?.altitude) || null,
-    on_ground: flight.status === 'scheduled' || flight.status === 'active',
-    velocity: parseInt(flight.speed?.horizontal) || null,
-    true_track: parseInt(flight.geography?.direction) || null,
-    vertical_rate: parseInt(flight.speed?.vertical) || null,
-    geo_altitude: parseInt(flight.geography?.altitude) || null,
-    squawk: null
-  })).filter((aircraft: AircraftState) => aircraft.longitude !== null && aircraft.latitude !== null);
-}
+const CACHE_DURATION = 30 * 1000; // 30 seconds cache
 
 export async function GET(request: NextRequest) {
   try {
     const now = Date.now();
-    const cacheKey = 'aircraft_states';
     
-    // Check if we're still in rate limit cooldown
-    if (lastRateLimitTime > 0 && (now - lastRateLimitTime) < RATE_LIMIT_DURATION) {
-      const waitTime = Math.ceil((RATE_LIMIT_DURATION - (now - lastRateLimitTime)) / 1000);
-      console.log(`Still in rate limit cooldown. ${waitTime} seconds remaining.`);
-      
-      // Return cached data if available
-      const cached = cache.get(cacheKey);
-      if (cached) {
-        return NextResponse.json({
-          ...cached.data,
-          fromCache: true,
-          rateLimited: true,
-          waitTime,
-          message: `Rate limited. Using cached data. Try again in ${waitTime} seconds.`
-        });
-      }
-    }
-
-    // Check if we need to respect minimum interval
-    if (lastSuccessfulRequest > 0 && (now - lastSuccessfulRequest) < MIN_REQUEST_INTERVAL) {
-      const cached = cache.get(cacheKey);
-      if (cached) {
-        console.log('Using cached data due to minimum request interval');
-        return NextResponse.json({
-          ...cached.data,
-          fromCache: true,
-          message: 'Using cached data to respect rate limits'
-        });
-      }
-    }
-
-    // Check cache first
-    const cached = cache.get(cacheKey);
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      console.log(`Serving from cache (source: ${cached.source})`);
+    // Check if we have valid cached data
+    if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
       return NextResponse.json({
-        ...cached.data,
-        fromCache: true
+        ...cachedData,
+        fromCache: true,
+        message: 'Demo mode - using mock data'
       });
     }
-
-    // Load credentials
-    const credentialsPath = path.join(process.cwd(), 'credentials.json');
-    let credentials = null;
     
-    if (fs.existsSync(credentialsPath)) {
-      const credentialsData = fs.readFileSync(credentialsPath, 'utf8');
-      credentials = JSON.parse(credentialsData);
-    }
-
-    let aircraftData: AircraftState[] = [];
-    let dataSource = 'mock';
-    let isAuthenticated = false;
-
-    try {
-      // Try FlightAware first if API key is available
-      if (credentials?.flightAwareApiKey) {
-        console.log('Attempting FlightAware API...');
-        aircraftData = await fetchFromFlightAware(credentials.flightAwareApiKey);
-        dataSource = 'flightaware';
-        isAuthenticated = true;
-      }
-      // Try Aviation Edge if FlightAware fails or isn't available
-      else if (credentials?.aviationEdgeApiKey) {
-        console.log('Attempting Aviation Edge API...');
-        aircraftData = await fetchFromAviationEdge(credentials.aviationEdgeApiKey);
-        dataSource = 'aviationedge';
-        isAuthenticated = true;
-      }
-      // Fallback to mock data if no API keys available
-      else {
-        console.log('No API keys found, using mock data');
-        aircraftData = generateMockAircraftData();
-        dataSource = 'mock';
-      }
-
-      // Reset rate limit tracking on successful request
-      lastRateLimitTime = 0;
-      lastSuccessfulRequest = now;
-
-    } catch (apiError) {
-      console.error(`API error from ${dataSource}:`, apiError);
-      
-      // Handle rate limiting
-      if (apiError instanceof Error && apiError.message.includes('429')) {
-        lastRateLimitTime = now;
-        console.log('Rate limited - setting cooldown period');
-        
-        // Return cached data if available
-        const cached = cache.get(cacheKey);
-        if (cached) {
-          return NextResponse.json({
-            ...cached.data,
-            fromCache: true,
-            rateLimited: true,
-            message: 'Rate limited. Using cached data.',
-            waitTime: Math.ceil(RATE_LIMIT_DURATION / 1000)
-          });
-        }
-      }
-
-      // Fallback to mock data on any API error
-      console.log('API failed, falling back to mock data');
-      aircraftData = generateMockAircraftData();
-      dataSource = 'mock';
-      isAuthenticated = false;
-    }
-
+    // Generate new mock data
+    const aircraftData = generateMockAircraftData();
+    
     // Calculate statistics
     const airborne = aircraftData.filter(a => !a.on_ground).length;
     const ground = aircraftData.filter(a => a.on_ground).length;
     const countries = new Set(aircraftData.map(a => a.origin_country).filter(Boolean)).size;
-
+    
     const responseData = {
       aircraft: aircraftData,
       stats: {
@@ -262,56 +143,61 @@ export async function GET(request: NextRequest) {
         trackedCountries: countries
       },
       timestamp: new Date().toISOString(),
-      authenticated: isAuthenticated,
-      dataSource,
-      fromCache: false,
-      credentialsFound: !!(credentials?.flightAwareApiKey || credentials?.aviationEdgeApiKey)
-    };
-
-    // Cache the response
-    cache.set(cacheKey, {
-      data: responseData,
-      timestamp: now,
-      source: dataSource
-    });
-
-    console.log(`Successfully fetched ${aircraftData.length} aircraft from ${dataSource}`);
-
-    return NextResponse.json(responseData);
-
-  } catch (error) {
-    console.error('Failed to fetch live aircraft data:', error);
-    
-    // Try to return cached data even on error
-    const cached = cache.get('aircraft_states');
-    if (cached) {
-      return NextResponse.json({
-        ...cached.data,
-        fromCache: true,
-        error: 'API error - using cached data',
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      });
-    }
-
-    // Final fallback to mock data
-    const mockData = generateMockAircraftData();
-    const airborne = mockData.filter(a => !a.on_ground).length;
-    const ground = mockData.filter(a => a.on_ground).length;
-    const countries = new Set(mockData.map(a => a.origin_country).filter(Boolean)).size;
-
-    return NextResponse.json({
-      aircraft: mockData,
-      stats: {
-        totalAircraft: mockData.length,
-        airborneAircraft: airborne,
-        groundAircraft: ground,
-        trackedCountries: countries
-      },
-      timestamp: new Date().toISOString(),
       authenticated: false,
       dataSource: 'mock',
       fromCache: false,
-      error: 'All APIs failed - using mock data',
+      message: 'Demo mode - using realistic mock data'
+    };
+    
+    // Cache the response
+    cachedData = {
+      aircraft: aircraftData,
+      timestamp: now,
+      stats: responseData.stats
+    };
+    
+    // Simulate some loading time for realism
+    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+    
+    return NextResponse.json(responseData);
+    
+  } catch (error) {
+    console.error('Failed to generate mock aircraft data:', error);
+    
+    // Fallback to minimal mock data
+    const fallbackData = [];
+    for (let i = 0; i < 10; i++) {
+      fallbackData.push({
+        icao24: Math.random().toString(16).substr(2, 6),
+        callsign: `DEMO${i.toString().padStart(3, '0')}`,
+        origin_country: 'Demo Country',
+        time_position: Math.floor(Date.now() / 1000),
+        last_contact: Math.floor(Date.now() / 1000),
+        longitude: (Math.random() - 0.5) * 360,
+        latitude: (Math.random() - 0.5) * 160,
+        baro_altitude: Math.floor(Math.random() * 40000),
+        on_ground: false,
+        velocity: Math.floor(Math.random() * 500) + 200,
+        true_track: Math.floor(Math.random() * 360),
+        vertical_rate: 0,
+        geo_altitude: Math.floor(Math.random() * 40000),
+        squawk: null
+      });
+    }
+    
+    return NextResponse.json({
+      aircraft: fallbackData,
+      stats: {
+        totalAircraft: fallbackData.length,
+        airborneAircraft: fallbackData.length,
+        groundAircraft: 0,
+        trackedCountries: 1
+      },
+      timestamp: new Date().toISOString(),
+      authenticated: false,
+      dataSource: 'fallback',
+      fromCache: false,
+      error: 'Failed to generate mock data - using fallback',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
     });
   }

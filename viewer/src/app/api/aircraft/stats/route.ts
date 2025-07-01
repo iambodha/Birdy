@@ -1,107 +1,50 @@
 import { NextResponse } from 'next/server';
-import sqlite3 from 'sqlite3';
-import path from 'path';
+
+// Mock data for aircraft statistics
+const mockStats = {
+  totalAircraft: 15847,
+  recentAdditions: 342,
+  topManufacturers: [
+    { manufacturer_name: 'Boeing', count: 4521 },
+    { manufacturer_name: 'Airbus', count: 3892 },
+    { manufacturer_name: 'Bombardier', count: 1834 },
+    { manufacturer_name: 'Embraer', count: 1456 },
+    { manufacturer_name: 'Cessna', count: 1234 },
+    { manufacturer_name: 'McDonnell Douglas', count: 987 },
+    { manufacturer_name: 'ATR', count: 743 },
+    { manufacturer_name: 'Beechcraft', count: 567 },
+    { manufacturer_name: 'Piper', count: 432 },
+    { manufacturer_name: 'Saab', count: 181 }
+  ],
+  topOperators: [
+    { operator: 'Southwest Airlines', count: 234 },
+    { operator: 'American Airlines', count: 187 },
+    { operator: 'Delta Air Lines', count: 156 },
+    { operator: 'United Airlines', count: 143 },
+    { operator: 'Lufthansa', count: 98 },
+    { operator: 'British Airways', count: 87 },
+    { operator: 'Air France', count: 76 },
+    { operator: 'KLM', count: 65 },
+    { operator: 'Emirates', count: 54 },
+    { operator: 'Qatar Airways', count: 43 }
+  ],
+  topAircraftTypes: [
+    { model: 'Boeing 737-800', count: 1234 },
+    { model: 'Airbus A320', count: 987 },
+    { model: 'Boeing 777-300ER', count: 654 },
+    { model: 'Airbus A350-900', count: 543 },
+    { model: 'Boeing 787-9', count: 432 },
+    { model: 'Airbus A380-800', count: 321 },
+    { model: 'Boeing 747-8F', count: 234 },
+    { model: 'Embraer E175', count: 198 },
+    { model: 'Bombardier CRJ900', count: 167 },
+    { model: 'ATR 72-600', count: 145 }
+  ]
+};
 
 export async function GET() {
-  return new Promise((resolve) => {
-    try {
-      const dbPath = path.join(process.cwd(), 'birdy_flights.db');
-      
-      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
-        if (err) {
-          resolve(NextResponse.json(
-            { error: 'Failed to connect to database' },
-            { status: 500 }
-          ));
-          return;
-        }
+  // Simulate some delay to make it feel more realistic
+  await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Get total aircraft count
-        db.get(`SELECT COUNT(*) as count FROM aircraft_metadata`, (err, totalAircraft: { count: number }) => {
-          if (err) {
-            db.close();
-            resolve(NextResponse.json({ error: 'Failed to fetch total count' }, { status: 500 }));
-            return;
-          }
-
-          // Get manufacturer distribution
-          db.all(`
-            SELECT manufacturer_name, COUNT(*) as count 
-            FROM aircraft_metadata 
-            WHERE manufacturer_name IS NOT NULL 
-            GROUP BY manufacturer_name 
-            ORDER BY count DESC 
-            LIMIT 10
-          `, (err, manufacturers: { manufacturer_name: string; count: number }[]) => {
-            if (err) {
-              db.close();
-              resolve(NextResponse.json({ error: 'Failed to fetch manufacturers' }, { status: 500 }));
-              return;
-            }
-
-            // Get operator distribution
-            db.all(`
-              SELECT operator, COUNT(*) as count 
-              FROM aircraft_metadata 
-              WHERE operator IS NOT NULL AND operator != '' 
-              GROUP BY operator 
-              ORDER BY count DESC 
-              LIMIT 10
-            `, (err, operators: { operator: string; count: number }[]) => {
-              if (err) {
-                db.close();
-                resolve(NextResponse.json({ error: 'Failed to fetch operators' }, { status: 500 }));
-                return;
-              }
-
-              // Get aircraft types
-              db.all(`
-                SELECT model, COUNT(*) as count 
-                FROM aircraft_metadata 
-                WHERE model IS NOT NULL 
-                GROUP BY model 
-                ORDER BY count DESC 
-                LIMIT 10
-              `, (err, aircraftTypes: { model: string; count: number }[]) => {
-                if (err) {
-                  db.close();
-                  resolve(NextResponse.json({ error: 'Failed to fetch aircraft types' }, { status: 500 }));
-                  return;
-                }
-
-                // Get recent additions
-                db.get(`
-                  SELECT COUNT(*) as count 
-                  FROM aircraft_metadata 
-                  WHERE updated_at >= datetime('now', '-7 days')
-                `, (err, recentAdditions: { count: number }) => {
-                  db.close();
-                  
-                  if (err) {
-                    resolve(NextResponse.json({ error: 'Failed to fetch recent additions' }, { status: 500 }));
-                    return;
-                  }
-
-                  resolve(NextResponse.json({
-                    totalAircraft: totalAircraft.count,
-                    recentAdditions: recentAdditions.count,
-                    topManufacturers: manufacturers,
-                    topOperators: operators,
-                    topAircraftTypes: aircraftTypes
-                  }));
-                });
-              });
-            });
-          });
-        });
-      });
-
-    } catch (error) {
-      console.error('Database error:', error);
-      resolve(NextResponse.json(
-        { error: 'Failed to fetch statistics' },
-        { status: 500 }
-      ));
-    }
-  });
+  return NextResponse.json(mockStats);
 }
