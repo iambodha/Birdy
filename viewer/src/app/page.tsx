@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plane, Users, Building, Calendar, ChevronLeft, ChevronRight, History, X, MapPin, Clock, Gauge, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
-import MockDataService from '../lib/mockDataService';
+import MockDataService from './src/lib/mockDataService';
 
 interface AircraftMetadata {
   id: number;
