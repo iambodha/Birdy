@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Plane, RefreshCw, Users, MapPin, Clock, Gauge, ArrowUp, X, Maximize2, Minimize2 } from 'lucide-react';
-import MockDataService from '../../lib/mockDataService.js';
+import MockDataService from '../../lib/mockDataService';
 
 interface AircraftState {
   icao24: string;
