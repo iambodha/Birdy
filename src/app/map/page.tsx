@@ -2,30 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Plane, RefreshCw, Users, MapPin, Clock, Gauge, ArrowUp, X, Maximize2, Minimize2 } from 'lucide-react';
-
-interface AircraftState {
-  icao24: string;
-  callsign: string | null;
-  origin_country: string | null;
-  time_position: number | null;
-  last_contact: number;
-  longitude: number | null;
-  latitude: number | null;
-  baro_altitude: number | null;
-  on_ground: boolean;
-  velocity: number | null;
-  true_track: number | null;
-  vertical_rate: number | null;
-  geo_altitude: number | null;
-  squawk: string | null;
-}
-
-interface MapStats {
-  totalAircraft: number;
-  airborneAircraft: number;
-  groundAircraft: number;
-  trackedCountries: number;
-}
+import { getLiveAircraftData, AircraftState, MapStats } from '@/data/mockLiveAircraftData';
 
 interface ViewportBounds {
   minLat: number;
@@ -244,34 +221,31 @@ export default function LiveMap() {
     setZoomLevel(prev => Math.max(0.25, prev / 1.5));
   }, []);
 
-  // Enhanced fetch function with smart loading
+  // Enhanced fetch function with mock data
   const fetchAircraftData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/aircraft/live');
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
       
-      if (data.error) {
-        throw new Error(data.details || data.error);
-      }
-
+      // Use mock data instead of API call
+      const data = getLiveAircraftData();
+      
       const parsedAircraft = data.aircraft || [];
-      const apiStats = data.stats || {};
+      const apiStats = data.stats || {
+        totalAircraft: 0,
+        airborneAircraft: 0,
+        groundAircraft: 0,
+        trackedCountries: 0
+      };
 
       setAircraft(parsedAircraft);
       setLastUpdate(new Date());
 
-      // Use stats from API response
+      // Use stats from mock data response
       setStats({
-        totalAircraft: apiStats.totalAircraft || 0,
-        airborneAircraft: apiStats.airborneAircraft || 0,
-        groundAircraft: apiStats.groundAircraft || 0,
-        trackedCountries: apiStats.trackedCountries || 0
+        totalAircraft: apiStats.totalAircraft,
+        airborneAircraft: apiStats.airborneAircraft,
+        groundAircraft: apiStats.groundAircraft,
+        trackedCountries: apiStats.trackedCountries
       });
 
     } catch (error) {

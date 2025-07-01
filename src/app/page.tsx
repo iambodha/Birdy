@@ -3,63 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Plane, Users, Building, Calendar, ChevronLeft, ChevronRight, History, X, MapPin, Clock, Gauge, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
-
-interface AircraftMetadata {
-  id: number;
-  icao24: string;
-  registration: string | null;
-  manufacturer_name: string | null;
-  model: string | null;
-  typecode: string | null;
-  operator: string | null;
-  operator_callsign: string | null;
-  owner: string | null;
-  category_description: string | null;
-  built: string | null;
-  first_flight_date: string | null;
-  engines: string | null;
-  seat_configuration: string | null;
-  updated_at: string;
-}
-
-interface FlightJourney {
-  id: number;
-  icao24: string;
-  callsign: string | null;
-  origin_country: string | null;
-  collection_time: string;
-  flight_date: string;
-  departure_time: string;
-  arrival_time: string;
-  duration_minutes: number | null;
-  start_status: string | null;
-  end_status: string | null;
-  flight_status: string | null;
-  max_altitude: number | null;
-  max_velocity: number | null;
-  position_count: number | null;
-  positions: Position[];
-}
-
-interface Position {
-  timestamp: string;
-  lon: number;
-  lat: number;
-  alt_baro?: number;
-  alt_geo?: number;
-  velocity?: number;
-  track?: number;
-  vert_rate?: number;
-  on_ground?: boolean;
-}
-
-interface Stats {
-  totalAircraft: number;
-  recentAdditions: number;
-  topManufacturers: { manufacturer_name: string; count: number }[];
-  topOperators: { operator: string; count: number }[];
-  topAircraftTypes: { model: string; count: number }[];
-}
+import { getAircraftPage, AircraftMetadata } from '@/data/mockAircraftData';
+import { getMockFlightHistory, getMockStats, FlightJourney, Position, Stats } from '@/data/mockFlightHistoryData';
 
 interface ApiResponse {
   aircraft: AircraftMetadata[];
@@ -93,8 +38,8 @@ export default function Home() {
   const fetchAircraft = async (page: number, searchTerm: string = '') => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/aircraft?page=${page}&limit=20&search=${encodeURIComponent(searchTerm)}`);
-      const data: ApiResponse = await response.json();
+      // Use mock data instead of API call
+      const data = getAircraftPage(page, 20, searchTerm);
       setAircraft(data.aircraft);
       setPagination(data.pagination);
     } catch (error) {
@@ -106,8 +51,8 @@ export default function Home() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/aircraft/stats');
-      const data: Stats = await response.json();
+      // Use mock data instead of API call
+      const data = getMockStats();
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -117,8 +62,8 @@ export default function Home() {
   const fetchFlightHistory = async (icao24: string) => {
     setHistoryLoading(true);
     try {
-      const response = await fetch(`/api/aircraft/history?icao24=${encodeURIComponent(icao24)}`);
-      const data = await response.json();
+      // Use mock data instead of API call
+      const data = getMockFlightHistory(icao24);
       setFlightHistory(data.flights || []);
     } catch (error) {
       console.error('Failed to fetch flight history:', error);
