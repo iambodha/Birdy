@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Plane, RefreshCw, Users, MapPin, Clock, Gauge, ArrowUp, X, Maximize2, Minimize2 } from 'lucide-react';
+import MockDataService from '../../lib/mockDataService';
 
 interface AircraftState {
   icao24: string;
@@ -60,11 +61,39 @@ export default function LiveMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const mockDataService = MockDataService.getInstance();
+
   const [loadingConfig] = useState<LoadingConfig>({
-    maxAircraftDisplay: 1000, // Maximum aircraft to show at once
-    chunkSize: 250, // Load aircraft in chunks
-    viewportPadding: 20 // Padding around viewport in degrees
+    maxAircraftDisplay: 1000,
+    chunkSize: 250,
+    viewportPadding: 20
   });
+
+  // Updated fetch function to use mock data service
+  const fetchAircraftData = async () => {
+    try {
+      setLoading(true);
+      const data = await mockDataService.getLiveAircraft();
+      
+      const parsedAircraft = data.aircraft || [];
+      const apiStats = data.stats || {};
+
+      setAircraft(parsedAircraft);
+      setLastUpdate(new Date());
+
+      setStats({
+        totalAircraft: apiStats.totalAircraft || 0,
+        airborneAircraft: apiStats.airborneAircraft || 0,
+        groundAircraft: apiStats.groundAircraft || 0,
+        trackedCountries: apiStats.trackedCountries || 0
+      });
+
+    } catch (error) {
+      console.error('Failed to fetch aircraft data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Smart loading configuration based on zoom level
   const getSmartLoadingConfig = useCallback(() => {
@@ -244,43 +273,6 @@ export default function LiveMap() {
     setZoomLevel(prev => Math.max(0.25, prev / 1.5));
   }, []);
 
-  // Enhanced fetch function with smart loading
-  const fetchAircraftData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/aircraft/live');
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.details || data.error);
-      }
-
-      const parsedAircraft = data.aircraft || [];
-      const apiStats = data.stats || {};
-
-      setAircraft(parsedAircraft);
-      setLastUpdate(new Date());
-
-      // Use stats from API response
-      setStats({
-        totalAircraft: apiStats.totalAircraft || 0,
-        airborneAircraft: apiStats.airborneAircraft || 0,
-        groundAircraft: apiStats.groundAircraft || 0,
-        trackedCountries: apiStats.trackedCountries || 0
-      });
-
-    } catch (error) {
-      console.error('Failed to fetch aircraft data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Filter aircraft based on search and airborne filter
   useEffect(() => {
     let filtered = aircraft;
@@ -330,7 +322,7 @@ export default function LiveMap() {
 
   const formatVelocity = (velocity: number | null) => {
     if (velocity === null) return 'N/A';
-    return `${Math.round(velocity * 1.94384)} kt`; // Convert m/s to knots
+    return `${Math.round(velocity * 1.94384)} kt`;
   };
 
   const formatTrack = (track: number | null) => {
@@ -340,7 +332,7 @@ export default function LiveMap() {
 
   const formatVerticalRate = (rate: number | null) => {
     if (rate === null) return 'N/A';
-    const fpm = Math.round(rate * 196.85); // Convert m/s to ft/min
+    const fpm = Math.round(rate * 196.85);
     return `${fpm > 0 ? '+' : ''}${fpm} ft/min`;
   };
 
@@ -528,7 +520,6 @@ export default function LiveMap() {
             {/* Simple world map background */}
             <div className="absolute inset-0 opacity-20">
               <svg viewBox="0 0 1000 500" className="w-full h-full">
-                {/* Simplified world map outline */}
                 <rect width="1000" height="500" fill="#1f2937" />
                 <path d="M150,200 Q200,180 250,200 Q300,220 350,200 L400,220 L450,200 Q500,180 550,200" stroke="#374151" strokeWidth="2" fill="none" />
                 <path d="M100,300 Q150,280 200,300 Q250,320 300,300 L350,320 L400,300 Q450,280 500,300" stroke="#374151" strokeWidth="2" fill="none" />
@@ -537,15 +528,13 @@ export default function LiveMap() {
               </svg>
             </div>
 
-            {/* Optimized Aircraft markers - only render displayed aircraft */}
+            {/* Aircraft markers */}
             {displayedAircraft.map((aircraft) => {
               if (aircraft.longitude === null || aircraft.latitude === null) return null;
               
-              // Simple projection with zoom and pan
               const x = ((aircraft.longitude + 180) / 360) * 100 * zoomLevel - (mapCenter.lon + 180) / 360 * 100 * (zoomLevel - 1);
               const y = ((90 - aircraft.latitude) / 180) * 100 * zoomLevel - (90 - mapCenter.lat) / 180 * 100 * (zoomLevel - 1);
               
-              // Skip if outside visible area
               if (x < -5 || x > 105 || y < -5 || y > 105) return null;
               
               return (
@@ -569,7 +558,7 @@ export default function LiveMap() {
               );
             })}
 
-            {/* Enhanced Legend */}
+            {/* Legend */}
             <div className="absolute bottom-4 left-4 bg-gray-800 bg-opacity-90 p-4 rounded-lg">
               <h3 className="text-sm font-semibold mb-2">Legend & Info</h3>
               <div className="space-y-1 text-xs">
@@ -589,7 +578,7 @@ export default function LiveMap() {
               </div>
             </div>
 
-            {/* Loading indicator for chunks */}
+            {/* Loading indicator */}
             {currentChunk < Math.ceil(visibleAircraftInViewport.length / loadingConfig.chunkSize) - 1 && (
               <div className="absolute top-4 right-4 bg-gray-800 bg-opacity-90 p-2 rounded-lg">
                 <div className="flex items-center gap-2 text-sm">

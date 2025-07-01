@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plane, Users, Building, Calendar, ChevronLeft, ChevronRight, History, X, MapPin, Clock, Gauge, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
+import MockDataService from '../lib/mockDataService';
 
 interface AircraftMetadata {
   id: number;
@@ -90,11 +91,12 @@ export default function Home() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  const mockDataService = MockDataService.getInstance();
+
   const fetchAircraft = async (page: number, searchTerm: string = '') => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/aircraft?page=${page}&limit=20&search=${encodeURIComponent(searchTerm)}`);
-      const data: ApiResponse = await response.json();
+      const data = await mockDataService.getAircraft(page, 20, searchTerm);
       setAircraft(data.aircraft);
       setPagination(data.pagination);
     } catch (error) {
@@ -106,8 +108,7 @@ export default function Home() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/aircraft/stats');
-      const data: Stats = await response.json();
+      const data = await mockDataService.getStats();
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -117,8 +118,7 @@ export default function Home() {
   const fetchFlightHistory = async (icao24: string) => {
     setHistoryLoading(true);
     try {
-      const response = await fetch(`/api/aircraft/history?icao24=${encodeURIComponent(icao24)}`);
-      const data = await response.json();
+      const data = await mockDataService.getFlightHistory(icao24);
       setFlightHistory(data.flights || []);
     } catch (error) {
       console.error('Failed to fetch flight history:', error);
