@@ -34,45 +34,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Debug directory contents
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
+      
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          echo "Checking for package manager files..."
-          if [ -f "yarn.lock" ]; then
-            echo "Found yarn.lock"
+          if [ -f "${{ github.workspace }}/viewer/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "package-lock.json" ]; then
-            echo "Found package-lock.json"
+          elif [ -f "${{ github.workspace }}/viewer/package.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "package.json" ]; then
-            echo "Found package.json (no lock file)"
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-            exit 0
           else
             echo "Unable to determine package manager"
-            echo "Files in directory:"
-            ls -la
             exit 1
           fi
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-          cache-dependency-path: viewer/package-lock.json
+          cache-dependency-path: ./viewer/package-lock.json
+      
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -81,20 +68,24 @@ jobs:
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
+      
       - name: Restore cache
         uses: actions/cache@v4
         with:
           path: |
-            viewer/.next/cache
+            ./viewer/.next/cache
           # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('viewer/package-lock.json', 'viewer/yarn.lock') }}-${{ hashFiles('viewer/**.[jt]s', 'viewer/**.[jt]sx') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('./viewer/package-lock.json', './viewer/yarn.lock') }}-${{ hashFiles('./viewer/**/*.[jt]s', './viewer/**/*.[jt]sx') }}
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('viewer/package-lock.json', 'viewer/yarn.lock') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('./viewer/package-lock.json', './viewer/yarn.lock') }}-
+      
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
