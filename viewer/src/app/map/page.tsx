@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Plane, RefreshCw, Users, MapPin, Clock, Gauge, ArrowUp, X, Maximize2, Minimize2 } from 'lucide-react';
-import MockDataService from '../../lib/mockDataService.js';
+import MockDataService from '../../lib/mockDataService';
 
 interface AircraftState {
   icao24: string;
@@ -316,4 +316,82 @@ export default function LiveMap() {
   }, []);
 
   const formatAltitude = (altitude: number | null) => {
-    if
+    if (altitude === null) return '';
+    return `${Math.round(altitude)} ft`;
+  };
+
+  const formatVelocity = (velocity: number | null) => {
+    if (velocity === null) return '';
+    return `${Math.round(velocity)} knots`;
+  };
+
+  const handleAircraftSelect = (aircraft: AircraftState) => {
+    if (selectedAircraft?.icao24 === aircraft.icao24) {
+      setSelectedAircraft(null);
+    } else {
+      setSelectedAircraft(aircraft);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      mapRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  return (
+    <div className={`live-map ${isFullscreen ? 'fullscreen' : ''}`} ref={mapRef}>
+      <div className="map-controls">
+        <div className="zoom-controls">
+          <button onClick={handleZoomOut} disabled={loading}>
+            <Minimize2 />
+          </button>
+          <button onClick={handleZoomIn} disabled={loading}>
+            <Maximize2 />
+          </button>
+        </div>
+        <button className="refresh-button" onClick={fetchAircraftData} disabled={loading}>
+          <RefreshCw />
+        </button>
+        <button className="fullscreen-button" onClick={toggleFullscreen}>
+          {isFullscreen ? <X /> : <Maximize2 />}
+        </button>
+      </div>
+      <div className="map-stats">
+        <div>Total Aircraft: {stats.totalAircraft}</div>
+        <div>Airborne: {stats.airborneAircraft}</div>
+        <div>Grounded: {stats.groundAircraft}</div>
+        <div>Tracked Countries: {stats.trackedCountries}</div>
+        <div>Last Update: {lastUpdate?.toLocaleTimeString() || 'N/A'}</div>
+      </div>
+      {loading && <div className="loading-overlay">Loading...</div>}
+      <div className="aircraft-list">
+        {displayedAircraft.map(aircraft => (
+          <div 
+            key={aircraft.icao24} 
+            className={`aircraft-item ${selectedAircraft?.icao24 === aircraft.icao24 ? 'selected' : ''}`}
+            onClick={() => handleAircraftSelect(aircraft)}
+          >
+            <div className="aircraft-info">
+              <div>ICAO24: {aircraft.icao24}</div>
+              <div>Callsign: {aircraft.callsign}</div>
+              <div>Origin: {aircraft.origin_country}</div>
+              <div>Altitude: {formatAltitude(aircraft.baro_altitude)}</div>
+              <div>Velocity: {formatVelocity(aircraft.velocity)}</div>
+              <div>Position: {aircraft.latitude?.toFixed(2)}, {aircraft.longitude?.toFixed(2)}</div>
+              <div>Last Contact: {new Date(aircraft.last_contact * 1000).toLocaleTimeString()}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="map-viewport"
+        onMouseDown={handleMapInteraction}
+        onTouchStart={handleMapInteraction}
+      >
+        {/* Map rendering logic here */}
+      </div>
+    </div>
+  );
+}
